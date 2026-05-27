@@ -36,6 +36,12 @@ class _HomePageState extends State<HomePage> {
   String? _error;
   bool _loading = false;
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _getWord() async {
     final input = _controller.text.trim();
     if (input.isEmpty) return;
