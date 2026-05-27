@@ -1,17 +1,22 @@
-# jaw
+# just a word
 
-A new Flutter project.
+A Flutter app for looking up word definitions. Enter any word and get its definition from the free [Dictionary API](https://dictionaryapi.dev).
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Look up definitions by typing a word and tapping "look it up" (or pressing enter)
+- Clean, minimal UI
 
-A few resources to get you started if this is your first Flutter project:
+## Getting started
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+**Prerequisites:** Flutter SDK installed ([flutter.dev](https://flutter.dev/docs/get-started/install))
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter run
+```
+
+## Tech
+
+- Flutter / Dart
+- [dictionaryapi.dev](https://dictionaryapi.dev) — free, no API key required

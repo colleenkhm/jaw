@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-
-import 'package:flutter/services.dart';
+import 'utils/word_utils.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,9 +11,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Hide the debug banner
       debugShowCheckedModeBanner: false,
-      title: 'Kindacode.com',
+      title: 'just a word',
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,
@@ -33,15 +30,32 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List _items = [];
+  final _controller = TextEditingController();
+  String? _word;
+  String? _definition;
+  String? _error;
+  bool _loading = false;
 
-  // Fetch content from the json file
-  Future<void> readJson() async {
-    final String response = await rootBundle.loadString('./assets/data.json');
-    final data = await json.decode(response);
+  Future<void> _getWord() async {
+    final input = _controller.text.trim();
+    if (input.isEmpty) return;
+
     setState(() {
-      _items = data["words"];
+      _loading = true;
+      _error = null;
     });
+
+    try {
+      final entry = await fetchWord(input);
+      setState(() {
+        _word = entry['word'];
+        _definition = entry['definition'];
+      });
+    } catch (_) {
+      setState(() => _error = 'Word not found. Try another one.');
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override
@@ -49,39 +63,47 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text(
-          'Kindacode.com',
-        ),
+        title: const Text('just a word'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(25),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ElevatedButton(
-              onPressed: readJson,
-              child: const Text('Load Data'),
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                hintText: 'enter a word',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _getWord(),
             ),
-
-            // Display the data loaded from sample.json
-            _items.isNotEmpty
-                ? Expanded(
-                    child: ListView.builder(
-                      itemCount: _items.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          key: ValueKey(_items[index]["word"]),
-                          margin: const EdgeInsets.all(10),
-                          color: Colors.amber.shade100,
-                          child: ListTile(
-                            leading: Text(_items[index]["word"]),
-                            title: Text(_items[index]["definition"]),
-                            // subtitle: Text(_items[index]["description"]),
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                : Container()
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loading ? null : _getWord,
+              child: const Text('look it up'),
+            ),
+            if (_loading) ...[
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 24),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            ],
+            if (_word != null && !_loading) ...[
+              const SizedBox(height: 24),
+              Text(
+                _word!,
+                style: Theme.of(context).textTheme.headlineMedium,
+                textAlign: TextAlign.center,
+              ),
+              if (_definition != null) ...[
+                const SizedBox(height: 12),
+                Text(_definition!, textAlign: TextAlign.center),
+              ],
+            ],
           ],
         ),
       ),
