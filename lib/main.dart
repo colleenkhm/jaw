@@ -13,10 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'just a word',
-      theme: ThemeData(
-        useMaterial3: true,
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
       home: const HomePage(),
     );
   }
@@ -44,6 +41,11 @@ class _HomePageState extends State<HomePage> {
     _controller.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _searchFor(String term) async {
+    _controller.text = term;
+    await _getWord();
   }
 
   Future<void> _getWord() async {
@@ -74,10 +76,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('just a word'),
-      ),
+      appBar: AppBar(centerTitle: true, title: const Text('just a word')),
       body: Padding(
         padding: const EdgeInsets.all(25),
         child: Column(
@@ -96,7 +95,8 @@ class _HomePageState extends State<HomePage> {
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _definitions!.length,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
                   itemBuilder: (context, index) {
                     final def = _definitions![index];
                     final partOfSpeech = def['partOfSpeech'] as String;
@@ -107,7 +107,8 @@ class _HomePageState extends State<HomePage> {
                           if (partOfSpeech.isNotEmpty)
                             Text(
                               partOfSpeech,
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
                                     fontStyle: FontStyle.italic,
                                     color: Colors.grey,
                                   ),
@@ -145,7 +146,14 @@ class _HomePageState extends State<HomePage> {
                   alignment: WrapAlignment.center,
                   spacing: 8,
                   runSpacing: 8,
-                  children: _synonyms!.map((s) => Chip(label: Text(s))).toList(),
+                  children: _synonyms!
+                      .map(
+                        (s) => ActionChip(
+                          label: Text(s),
+                          onPressed: () => _searchFor(s),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
               const SizedBox(height: 24),
