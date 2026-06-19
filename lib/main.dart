@@ -31,14 +31,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _controller = TextEditingController();
+  final _pageController = PageController();
   String? _word;
-  String? _definition;
+  List<Map<String, String>>? _definitions;
   String? _error;
   bool _loading = false;
+  int _currentPage = 0;
 
   @override
   void dispose() {
     _controller.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -54,9 +57,11 @@ class _HomePageState extends State<HomePage> {
     try {
       final entry = await fetchWord(input);
       setState(() {
-        _word = entry['word'];
-        _definition = entry['definition'];
+        _word = entry['word'] as String;
+        _definitions = entry['definitions'] as List<Map<String, String>>;
+        _currentPage = 0;
       });
+      if (_pageController.hasClients) _pageController.jumpToPage(0);
     } catch (_) {
       setState(() => _error = 'Word not found. Try another one.');
     } finally {
@@ -98,16 +103,59 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 24),
               Text(_error!, style: const TextStyle(color: Colors.red)),
             ],
-            if (_word != null && !_loading) ...[
+            if (_word != null && !_loading && _definitions != null) ...[
               const SizedBox(height: 24),
               Text(
                 _word!,
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
-              if (_definition != null) ...[
-                const SizedBox(height: 12),
-                Text(_definition!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 160,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _definitions!.length,
+                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  itemBuilder: (context, index) {
+                    final def = _definitions![index];
+                    return SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          if (def['partOfSpeech']!.isNotEmpty)
+                            Text(
+                              def['partOfSpeech']!,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(def['definition']!, textAlign: TextAlign.center),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (_definitions!.length > 1) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_definitions!.length, (index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: index == _currentPage
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade300,
+                      ),
+                    );
+                  }),
+                ),
               ],
             ],
           ],
