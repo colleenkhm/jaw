@@ -33,7 +33,8 @@ class _HomePageState extends State<HomePage> {
   final _controller = TextEditingController();
   final _pageController = PageController();
   String? _word;
-  List<Map<String, String>>? _definitions;
+  List<Map<String, dynamic>>? _definitions;
+  List<String>? _synonyms;
   String? _error;
   bool _loading = false;
   int _currentPage = 0;
@@ -58,7 +59,8 @@ class _HomePageState extends State<HomePage> {
       final entry = await fetchWord(input);
       setState(() {
         _word = entry['word'] as String;
-        _definitions = entry['definitions'] as List<Map<String, String>>;
+        _definitions = entry['definitions'] as List<Map<String, dynamic>>;
+        _synonyms = entry['synonyms'] as List<String>;
         _currentPage = 0;
       });
       if (_pageController.hasClients) _pageController.jumpToPage(0);
@@ -82,29 +84,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: 'enter a word',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (_) => _getWord(),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loading ? null : _getWord,
-              child: const Text('look it up'),
-            ),
-            if (_loading) ...[
-              const SizedBox(height: 24),
-              const CircularProgressIndicator(),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 24),
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-            ],
             if (_word != null && !_loading && _definitions != null) ...[
-              const SizedBox(height: 24),
               Text(
                 _word!,
                 style: Theme.of(context).textTheme.headlineMedium,
@@ -112,26 +92,28 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 160,
+                height: 140,
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _definitions!.length,
                   onPageChanged: (index) => setState(() => _currentPage = index),
                   itemBuilder: (context, index) {
                     final def = _definitions![index];
+                    final partOfSpeech = def['partOfSpeech'] as String;
+                    final definitionText = def['definition'] as String;
                     return SingleChildScrollView(
                       child: Column(
                         children: [
-                          if (def['partOfSpeech']!.isNotEmpty)
+                          if (partOfSpeech.isNotEmpty)
                             Text(
-                              def['partOfSpeech']!,
+                              partOfSpeech,
                               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                     fontStyle: FontStyle.italic,
                                     color: Colors.grey,
                                   ),
                             ),
                           const SizedBox(height: 4),
-                          Text(def['definition']!, textAlign: TextAlign.center),
+                          Text(definitionText, textAlign: TextAlign.center),
                         ],
                       ),
                     );
@@ -157,6 +139,37 @@ class _HomePageState extends State<HomePage> {
                   }),
                 ),
               ],
+              if (_synonyms != null && _synonyms!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _synonyms!.map((s) => Chip(label: Text(s))).toList(),
+                ),
+              ],
+              const SizedBox(height: 24),
+            ],
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                hintText: 'enter a word',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _getWord(),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loading ? null : _getWord,
+              child: const Text('look it up'),
+            ),
+            if (_loading) ...[
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 24),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
             ],
           ],
         ),

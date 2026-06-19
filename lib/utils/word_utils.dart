@@ -16,15 +16,17 @@ Future<Map<String, dynamic>> fetchWord(String word) async {
   final meanings = entry['meanings'] as List? ?? [];
   if (meanings.isEmpty) throw Exception('No meanings found');
 
-  final definitions = <Map<String, String>>[];
+  final definitions = <Map<String, dynamic>>[];
+  final synonyms = <String>{};
   for (final meaning in meanings) {
     final partOfSpeech = meaning['partOfSpeech'] as String? ?? '';
+    synonyms.addAll((meaning['synonyms'] as List?)?.cast<String>() ?? []);
     final defs = meaning['definitions'] as List? ?? [];
     for (final def in defs) {
       final text = def['definition'] as String?;
-      if (text != null) {
-        definitions.add({'partOfSpeech': partOfSpeech, 'definition': text});
-      }
+      if (text == null) continue;
+      synonyms.addAll((def['synonyms'] as List?)?.cast<String>() ?? []);
+      definitions.add({'partOfSpeech': partOfSpeech, 'definition': text});
     }
   }
   if (definitions.isEmpty) throw Exception('No definitions found');
@@ -32,5 +34,6 @@ Future<Map<String, dynamic>> fetchWord(String word) async {
   return {
     'word': entry['word'] as String,
     'definitions': definitions,
+    'synonyms': synonyms.toList(),
   };
 }
