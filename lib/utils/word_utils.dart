@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>> fetchWord(String word) async {
-  final uri = Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word');
+  final uri = Uri.parse(
+    'https://api.dictionaryapi.dev/api/v2/entries/en/$word',
+  );
   final response = await http.get(uri);
 
   if (response.statusCode != 200) {

@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'about_page.dart';
+import 'app_header.dart';
 import 'utils/word_utils.dart';
 
 void main() {
@@ -16,6 +18,7 @@ class MyApp extends StatelessWidget {
       title: 'just a word',
       theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
       home: const HomePage(),
+      routes: {'/about': (context) => const AboutPage()},
     );
   }
 }
@@ -75,11 +78,10 @@ class _HomePageState extends State<HomePage> {
                   if (partOfSpeech.isNotEmpty)
                     Text(
                       partOfSpeech,
-                      style: Theme.of(context).textTheme.labelMedium
-                          ?.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                          ),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
                     ),
                   const SizedBox(height: 4),
                   Text(definitionText, textAlign: TextAlign.center),
@@ -146,7 +148,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const Text('just a word')),
+      appBar: const JawAppBar(),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
