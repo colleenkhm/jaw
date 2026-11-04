@@ -237,89 +237,105 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const JawAppBar(),
-      body: Center(
-        child: SingleChildScrollView(
+      // The scroll view spans the full page so its scrollbar sits at the
+      // window's edge; minHeight keeps short content vertically centered.
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.all(25),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (_word != null && !_loading && _definitions != null) ...[
-                    Text(
-                      _word!,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildCarousel(),
-                    if (_definitions!.length > 1) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_definitions!.length, (index) {
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: index == _currentPage
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey.shade300,
-                            ),
-                          );
-                        }),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: const EdgeInsets.all(25),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (_word != null &&
+                          !_loading &&
+                          _definitions != null) ...[
+                        Text(
+                          _word!,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildCarousel(),
+                        if (_definitions!.length > 1) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(_definitions!.length, (
+                              index,
+                            ) {
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: index == _currentPage
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey.shade300,
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                        if (_synonyms != null && _synonyms!.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _synonyms!
+                                .map(
+                                  (s) => ActionChip(
+                                    label: Text(s),
+                                    onPressed: () => _searchFor(s),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                        if (_etymologies != null) ...[
+                          _buildEtymologySection('origin', (e) => e.origin),
+                          _buildEtymologySection('cognates', (e) => e.cognates),
+                        ],
+                        const SizedBox(height: 16),
+                        _buildAttribution(),
+                        const SizedBox(height: 24),
+                      ],
+                      TextField(
+                        controller: _controller,
+                        decoration: const InputDecoration(
+                          hintText: 'enter a word',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _getWord(),
                       ),
-                    ],
-                    if (_synonyms != null && _synonyms!.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _synonyms!
-                            .map(
-                              (s) => ActionChip(
-                                label: Text(s),
-                                onPressed: () => _searchFor(s),
-                              ),
-                            )
-                            .toList(),
+                      ElevatedButton(
+                        onPressed: _loading ? null : _getWord,
+                        child: const Text('look it up'),
                       ),
+                      if (_loading) ...[
+                        const SizedBox(height: 24),
+                        const CircularProgressIndicator(),
+                      ],
+                      if (_error != null) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
                     ],
-                    if (_etymologies != null) ...[
-                      _buildEtymologySection('origin', (e) => e.origin),
-                      _buildEtymologySection('cognates', (e) => e.cognates),
-                    ],
-                    const SizedBox(height: 16),
-                    _buildAttribution(),
-                    const SizedBox(height: 24),
-                  ],
-                  TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'enter a word',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _getWord(),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loading ? null : _getWord,
-                    child: const Text('look it up'),
-                  ),
-                  if (_loading) ...[
-                    const SizedBox(height: 24),
-                    const CircularProgressIndicator(),
-                  ],
-                  if (_error != null) ...[
-                    const SizedBox(height: 24),
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
