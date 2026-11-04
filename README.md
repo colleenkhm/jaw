@@ -9,6 +9,7 @@ Live at [just-a-word.com](https://just-a-word.com).
 - Look up a word by typing it and tapping "look it up" (or pressing enter)
 - Browse every definition for a word in a swipeable carousel — swipe, drag, or use the arrow buttons
 - See all synonyms for the word as chips; click a synonym chip to search for that word instead
+- See where the word comes from — its etymology, pulled from [Wiktionary's API](https://en.wiktionary.org/w/api.php) (words with several unrelated origins, like "bank", list each one)
 - Responsive layout that works on both mobile and desktop/web
 
 ## Getting started

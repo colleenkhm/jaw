@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'about_page.dart';
 import 'app_header.dart';
 import 'link_span.dart';
+import 'utils/etymology_utils.dart';
 import 'utils/word_utils.dart';
 
 void main() {
@@ -42,6 +43,8 @@ class _HomePageState extends State<HomePage> {
   String? _word;
   List<Map<String, dynamic>>? _definitions;
   List<String>? _synonyms;
+  List<Etymology>? _etymologies;
+  int _lookupId = 0;
   String? _error;
   bool _loading = false;
   int _currentPage = 0;
@@ -126,6 +129,50 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Loaded after the definitions so the extra request doesn't delay them.
+  Future<void> _loadEtymologies(String word, int lookupId) async {
+    final etymologies = await fetchEtymologies(word);
+    // Ignore the result if the user has looked up another word since.
+    if (!mounted || lookupId != _lookupId) return;
+    setState(() => _etymologies = etymologies);
+  }
+
+  /// A labelled list of one part (origin or cognates) of each etymology.
+  /// When a word has several origins, entries keep the origin's number so
+  /// cognates line up with the origin they belong to.
+  Widget _buildEtymologySection(String label, String Function(Etymology) part) {
+    final theme = Theme.of(context);
+    final numbered = _etymologies!.length > 1;
+    final entries = [
+      for (final (i, etymology) in _etymologies!.indexed)
+        if (part(etymology).isNotEmpty)
+          numbered ? '${i + 1}. ${part(etymology)}' : part(etymology),
+    ];
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontStyle: FontStyle.italic,
+              color: Colors.grey,
+            ),
+          ),
+          for (final entry in entries) ...[
+            const SizedBox(height: 6),
+            Text(
+              entry,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildAttribution() {
     final style = Theme.of(
       context,
@@ -155,6 +202,7 @@ class _HomePageState extends State<HomePage> {
     final input = _controller.text.trim();
     if (input.isEmpty) return;
 
+    final lookupId = ++_lookupId;
     setState(() {
       _loading = true;
       _error = null;
@@ -162,13 +210,16 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final entry = await fetchWord(input);
+      final word = entry['word'] as String;
       setState(() {
-        _word = entry['word'] as String;
+        _word = word;
         _definitions = entry['definitions'] as List<Map<String, dynamic>>;
         _synonyms = entry['synonyms'] as List<String>;
+        _etymologies = null;
         _currentPage = 0;
       });
       if (_pageController.hasClients) _pageController.jumpToPage(0);
+      _loadEtymologies(word, lookupId);
     } on WordNotFoundException {
       setState(() => _error = 'Word not found. Try another one.');
     } on DictionaryUnavailableException {
@@ -187,83 +238,89 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: const JawAppBar(),
       body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Padding(
-            padding: const EdgeInsets.all(25),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (_word != null && !_loading && _definitions != null) ...[
-                  Text(
-                    _word!,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildCarousel(),
-                  if (_definitions!.length > 1) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_definitions!.length, (index) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: index == _currentPage
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey.shade300,
-                          ),
-                        );
-                      }),
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.all(25),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (_word != null && !_loading && _definitions != null) ...[
+                    Text(
+                      _word!,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
                     ),
-                  ],
-                  if (_synonyms != null && _synonyms!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _synonyms!
-                          .map(
-                            (s) => ActionChip(
-                              label: Text(s),
-                              onPressed: () => _searchFor(s),
+                    const SizedBox(height: 12),
+                    _buildCarousel(),
+                    if (_definitions!.length > 1) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(_definitions!.length, (index) {
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: index == _currentPage
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey.shade300,
                             ),
-                          )
-                          .toList(),
-                    ),
+                          );
+                        }),
+                      ),
+                    ],
+                    if (_synonyms != null && _synonyms!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _synonyms!
+                            .map(
+                              (s) => ActionChip(
+                                label: Text(s),
+                                onPressed: () => _searchFor(s),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                    if (_etymologies != null) ...[
+                      _buildEtymologySection('origin', (e) => e.origin),
+                      _buildEtymologySection('cognates', (e) => e.cognates),
+                    ],
+                    const SizedBox(height: 16),
+                    _buildAttribution(),
+                    const SizedBox(height: 24),
                   ],
-                  const SizedBox(height: 16),
-                  _buildAttribution(),
-                  const SizedBox(height: 24),
-                ],
-                TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    hintText: 'enter a word',
-                    border: OutlineInputBorder(),
+                  TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'enter a word',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (_) => _getWord(),
                   ),
-                  onSubmitted: (_) => _getWord(),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loading ? null : _getWord,
-                  child: const Text('look it up'),
-                ),
-                if (_loading) ...[
-                  const SizedBox(height: 24),
-                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loading ? null : _getWord,
+                    child: const Text('look it up'),
+                  ),
+                  if (_loading) ...[
+                    const SizedBox(height: 24),
+                    const CircularProgressIndicator(),
+                  ],
+                  if (_error != null) ...[
+                    const SizedBox(height: 24),
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  ],
                 ],
-                if (_error != null) ...[
-                  const SizedBox(height: 24),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                ],
-              ],
+              ),
             ),
           ),
         ),
