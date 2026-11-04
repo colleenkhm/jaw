@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_header.dart';
+import 'link_span.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -29,10 +30,45 @@ class AboutPage extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'definitions and synonyms are pulled live from the free '
-                  'Dictionary API (dictionaryapi.dev).',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Builder(
+                  builder: (context) {
+                    final style = Theme.of(context).textTheme.bodyMedium;
+                    return Text.rich(
+                      TextSpan(
+                        style: style,
+                        children: [
+                          const TextSpan(
+                            text: 'definitions and synonyms come from ',
+                          ),
+                          linkSpan(
+                            context,
+                            'Wiktionary',
+                            'https://en.wiktionary.org',
+                            style: style,
+                          ),
+                          const TextSpan(text: ', via the '),
+                          linkSpan(
+                            context,
+                            'Free Dictionary API',
+                            'https://freedictionaryapi.com',
+                            style: style,
+                          ),
+                          const TextSpan(text: '. they are licensed under '),
+                          linkSpan(
+                            context,
+                            'CC BY-SA 4.0',
+                            'https://creativecommons.org/licenses/by-sa/4.0/',
+                            style: style,
+                          ),
+                          const TextSpan(
+                            text:
+                                '. this app shows a shortened selection '
+                                'of each entry.',
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

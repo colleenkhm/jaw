@@ -1,6 +1,6 @@
 # just a word
 
-A Flutter app for looking up word definitions and synonyms. Enter any word and browse all of its definitions and synonyms, pulled live from the free [Dictionary API](https://dictionaryapi.dev).
+A Flutter app for looking up word definitions and synonyms. Enter any word and browse all of its definitions and synonyms, pulled live from the [Free Dictionary API](https://freedictionaryapi.com), which serves [Wiktionary](https://en.wiktionary.org) data (CC BY-SA 4.0).
 
 Live at [just-a-word.com](https://just-a-word.com).
 
@@ -33,4 +33,4 @@ Pushes to `main` are automatically built and deployed to GitHub Pages via [`.git
 ## Tech
 
 - Flutter / Dart
-- [dictionaryapi.dev](https://dictionaryapi.dev) — free, no API key required
+- [freedictionaryapi.com](https://freedictionaryapi.com) — free, no API key required

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'about_page.dart';
 import 'app_header.dart';
+import 'link_span.dart';
 import 'utils/word_utils.dart';
 
 void main() {
@@ -16,7 +17,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'just a word',
-      theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        scaffoldBackgroundColor: Colors.lightBlue[50],
+        appBarTheme: AppBarTheme(backgroundColor: Colors.lightBlue[50]),
+      ),
       home: const HomePage(),
       routes: {'/about': (context) => const AboutPage()},
     );
@@ -120,6 +126,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildAttribution() {
+    final style = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600);
+    final wordUrl =
+        'https://en.wiktionary.org/wiki/${Uri.encodeComponent(_word!)}';
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          const TextSpan(text: 'from '),
+          linkSpan(context, 'Wiktionary', wordUrl, style: style),
+          const TextSpan(text: ' · '),
+          linkSpan(
+            context,
+            'CC BY-SA 4.0',
+            'https://creativecommons.org/licenses/by-sa/4.0/',
+            style: style,
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+
   Future<void> _getWord() async {
     final input = _controller.text.trim();
     if (input.isEmpty) return;
@@ -138,8 +169,14 @@ class _HomePageState extends State<HomePage> {
         _currentPage = 0;
       });
       if (_pageController.hasClients) _pageController.jumpToPage(0);
-    } catch (_) {
+    } on WordNotFoundException {
       setState(() => _error = 'Word not found. Try another one.');
+    } on DictionaryUnavailableException {
+      setState(
+        () => _error = 'Dictionary service unavailable. Try again in a moment.',
+      );
+    } catch (_) {
+      setState(() => _error = 'Something went wrong. Try again.');
     } finally {
       setState(() => _loading = false);
     }
@@ -201,6 +238,8 @@ class _HomePageState extends State<HomePage> {
                           .toList(),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  _buildAttribution(),
                   const SizedBox(height: 24),
                 ],
                 TextField(
